@@ -26,8 +26,8 @@ async function fetchAggregatedDurations(req, res) {
   const toDateFormatted = formatDateForJQL(toDate);
   
   const projectKeyString = projectKey.toString();
-  const jql = `project in (${projectKeyString.replace(/[{}]/g, '')}) AND status changed TO "In Progress" AFTER "${fromDateFormatted}" AND status changed TO "In Progress" BEFORE "${toDateFormatted}" AND issuetype IN (Story, Sub-task, Subtask, task, Bug, Sub-Bug) ORDER BY updatedDate DESC`;
-  const url = `https://digistore.atlassian.net/rest/api/3/search?jql=${encodeURIComponent(jql)}&expand=changelog&maxResults=50`;
+  const jql = `project in (${projectKeyString.replace(/[{}]/g, '')}) AND status changed TO "Done" AFTER "${fromDateFormatted}" AND status changed TO "Done" BEFORE "${toDateFormatted}" ORDER BY issueKey DESC`;
+  const url = `https://digistore.atlassian.net/rest/api/3/search?jql=${encodeURIComponent(jql)}&expand=changelog&maxResults=5000`;
 
   try {
     const response = await fetch(url, {
@@ -50,6 +50,7 @@ async function fetchAggregatedDurations(req, res) {
 
         aggregatedDurations.push({
           duration,
+          issueType: issue.fields.issuetype ? issue.fields.issuetype.name : null,
           key: issue.key,
           status
         });

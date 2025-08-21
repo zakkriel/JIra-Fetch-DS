@@ -26,8 +26,8 @@ async function fetchBugCycleTimes(req, res) {
 
     const projectKeyString = projectKey.toString();
     const issueTypeString = issueType.toString();
-    const jql = `project in (${projectKeyString.replace(/[{}]/g, '')}) AND issuetype in (${issueTypeString.replace(/[{}]/g, '')}) AND status changed TO "Done" AFTER "${fromDateFormatted}" AND status changed TO "Done" BEFORE "${toDateFormatted}" ORDER BY updatedDate DESC`;
-    const url = `https://digistore.atlassian.net/rest/api/3/search?jql=${encodeURIComponent(jql)}&expand=changelog&maxResults=1000`;
+    const jql = `project in (${projectKeyString.replace(/[{}]/g, '')}) AND issuetype in (${issueTypeString.replace(/[{}]/g, '')}) AND resolutiondate >= "${fromDateFormatted}" AND resolutiondate <= "${toDateFormatted}" ORDER BY issueKey DESC`;
+    const url = `https://digistore.atlassian.net/rest/api/3/search?jql=${encodeURIComponent(jql)}&expand=changelog&maxResults=10000`;
 
     try {
         const response = await fetch(url, {
@@ -60,7 +60,9 @@ async function fetchBugCycleTimes(req, res) {
                 cycleTime: cycleTime,
                 resolutionDate: issue.fields.resolutiondate,
                 priority: issue.fields.priority ? issue.fields.priority.name : null,
-                key: issue.key
+                key: issue.key,
+                labels: issue.fields.labels,
+                planned: (issue.fields.labels || []).includes('Unplanned') ? 'Unplanned': (issue.fields.labels || []).includes('Planned') ? 'Planned' : (issue.fields.labels || []).includes('Baseline') ? 'Baseline' : null
             };
         }).filter(issue => issue !== null);
 

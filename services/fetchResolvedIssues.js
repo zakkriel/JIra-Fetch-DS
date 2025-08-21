@@ -1,6 +1,7 @@
 const fetch = require("node-fetch");
 const base64 = require("base-64");
 const { formatDateForJQL } = require("../helpers/formatDateForJQL");
+const { getJiraIssuePrefix } = require("../helpers/projectPrefix");
 const {
   calculateWorkingTimeInMilliseconds,
 } = require("../helpers/calculateWorkingTime");
@@ -25,10 +26,16 @@ async function fetchResolvedIssues(req, res) {
   const fromDateFormatted = formatDateForJQL(fromDate);
   const toDateFormatted = formatDateForJQL(toDate);
   const projectKeyString = projectKey.toString();
-  const jql = `project in (${projectKeyString.replace(
-    /[{}]/g,
-    ""
-  )}) AND statusCategory IN (Done) AND status changed TO "In Progress" AFTER "${fromDateFormatted}" AND status changed TO "In Progress" BEFORE "${toDateFormatted}" AND issuetype IN (Story, Sub-task, Subtask, task, Bug, Sub-Bug) ORDER BY updatedDate DESC`;
+  
+  const projectPrefixed = getJiraIssuePrefix(projectKeyString);
+  
+  /*
+  const jql = `issueKey ~ "${projectPrefixed}" AND statusCategory IN (Done) AND status changed TO "In Progress" AFTER "${fromDateFormatted}" AND status changed TO "In Progress" BEFORE "${toDateFormatted}" AND issuetype IN (Story, Sub-task, Subtask, task, Bug, Sub-Bug) ORDER BY updatedDate DESC`;
+  
+  
+  */
+  const jql = `project in (${projectKeyString.replace(/[{}]/g, '')}) AND statusCategory IN (Done) AND status changed TO "In Progress" AFTER "${fromDateFormatted}" AND status changed TO "In Progress" BEFORE "${toDateFormatted}" AND issuetype IN (Story, Sub-task, Subtask, task, Bug, Sub-Bug) ORDER BY updatedDate DESC`;
+  
   const url = `https://digistore.atlassian.net/rest/api/3/search?jql=${encodeURIComponent(
     jql
   )}&expand=changelog&maxResults=1000`;
